@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <rect width="1200" height="630" fill="#08080d"/>
+  <rect x="0" y="0" width="1200" height="630" fill="#11172a" opacity=".55"/>
+  <circle cx="960" cy="120" r="230" fill="#c6a66b" opacity=".07"/>
+  <circle cx="960" cy="120" r="150" fill="#c6a66b" opacity=".06"/>
+  <path d="M0 630l240-90 220 62 250-104 240 78 250-66v120z" fill="#0b0d16"/>
+
+  <!-- três cartas: inversa ao centro, direitas nas pontas -->
+  <g transform="translate(516 150) scale(.78) rotate(-7 150 260)">
+    <rect x="0" y="0" width="300" height="520" rx="22" fill="#101018" stroke="#c6a66b" stroke-width="3"/>
+    <rect x="14" y="14" width="272" height="492" rx="14" fill="none" stroke="#c6a66b" stroke-width="1.2" opacity=".7"/>
+    <circle cx="150" cy="212" r="58" fill="none" stroke="#e8ce96" stroke-width="2.4" opacity=".85"/>
+    <path d="M150 140l13 59 59 13-59 13-13 59-13-59-59-13 59-13z" fill="#e8ce96" opacity=".55"/>
+    <path d="M74 356c34-30 62-30 76-8 14-22 42-22 76 8" fill="none" stroke="#56c5bd" stroke-width="3" opacity=".8"/>
+    <text x="150" y="452" text-anchor="middle" fill="#efe6d6" font-family="Georgia, 'Times New Roman', serif" font-size="26" letter-spacing="3">A ESTRELA</text>
+  </g>
+
+  <g transform="translate(742 112) scale(.78) rotate(2 150 260)">
+    <rect x="0" y="0" width="300" height="520" rx="22" fill="#0f1220" stroke="#8c7343" stroke-width="3"/>
+    <rect x="14" y="14" width="272" height="492" rx="14" fill="none" stroke="#c6a66b" stroke-width="1.2" opacity=".65"/>
+    <g transform="rotate(180 150 260)">
+      <circle cx="150" cy="230" r="82" fill="#e8ce96" opacity=".9"/>
+      <circle cx="184" cy="212" r="76" fill="#0f1220"/>
+      <path d="M92 356h116" stroke="#56c5bd" stroke-width="3" opacity=".75"/>
+    </g>
+    <text x="150" y="452" text-anchor="middle" fill="#efe6d6" font-family="Georgia, 'Times New Roman', serif" font-size="26" letter-spacing="3">A LUA · INV.</text>
+  </g>
+
+  <g transform="translate(958 166) scale(.78) rotate(8 150 260)">
+    <rect x="0" y="0" width="300" height="520" rx="22" fill="#101018" stroke="#c6a66b" stroke-width="3"/>
+    <rect x="14" y="14" width="272" height="492" rx="14" fill="none" stroke="#c6a66b" stroke-width="1.2" opacity=".7"/>
+    <circle cx="150" cy="220" r="46" fill="none" stroke="#e8ce96" stroke-width="3"/>
+    <path d="M150 150v-34M150 290v34M80 220H46M254 220h-34M101 171l-24-24M223 293l-24-24M199 171l24-24M77 293l24-24" stroke="#e8ce96" stroke-width="2.6" opacity=".8"/>
+    <path d="M112 372h76l-38 54z" fill="none" stroke="#56c5bd" stroke-width="3"/>
+    <text x="150" y="452" text-anchor="middle" fill="#efe6d6" font-family="Georgia, 'Times New Roman', serif" font-size="26" letter-spacing="3">O SOL</text>
+  </g>
+
+  <text x="90" y="230" fill="#efe6d6" font-family="Georgia, 'Times New Roman', serif" font-size="76" letter-spacing="14">ARCANA</text>
+  <text x="94" y="284" fill="#c6a66b" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="26">78 cartas · 76 tiragens</text>
+  <line x1="94" y1="300" x2="330" y2="300" stroke="#c6a66b" stroke-width="1.5" opacity=".55"/>
+  <text x="94" y="330" fill="#efe6d6" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="20" opacity=".78">desenho e prosa próprios,</text>
+  <text x="94" y="358" fill="#efe6d6" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="20" opacity=".78">sem previsão e sem terceiros</text>
+</svg>

@@ -1,0 +1,39 @@
+# dependências e build
+node_modules/
+.next/
+out/
+dist/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# dados locais (utilizadores, sessões, diário, exportações)
+var/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# segredos
+.env
+.env.local
+.env.*.local
+
+# arte e áudio gerados (regeneráveis com `npm run assets:build`)
+public/art/**
+!public/art/.gitkeep
+
+# caches e logs
+.cache/
+*.log
+.eslintcache
+.DS_Store
+
+# testes e2e
+playwright-report/
+test-results/
+.cache/
+
+.tmp/
+playwright-report/
+test-results/

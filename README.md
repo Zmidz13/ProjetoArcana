@@ -59,10 +59,15 @@ npm run dev
 ## Verificar
 
 ```bash
-npm run check    # typecheck + eslint + 115 testes + auditorias de conteúdo, tokens e a11y
+npm run check    # typecheck + eslint + 122 testes + auditorias de conteúdo, tokens e a11y
 npm run verify   # check + next build + benchmark do motor determinístico
 npm run test:e2e # Playwright (depois de: npm run test:e2e:install)
+npm run db:migrate # aplica as migrações à base configurada (idempotente)
 ```
+
+Deploy na Vercel: [`docs/DEPLOY-VERCEL.md`](docs/DEPLOY-VERCEL.md) — resume-se a pôr
+`DATABASE_URL` de um Postgres (o SQLite local não sobrevive lá) e manter a build command
+`npm run build`, que é o que gera a arte e o `content.json`.
 
 ## Documentação
 
@@ -77,6 +82,7 @@ npm run test:e2e # Playwright (depois de: npm run test:e2e:install)
 | [`docs/API.md`](docs/API.md) | contrato de todas as rotas, envelope de erro, CSRF, stream SSE |
 | [`docs/SEGURANCA.md`](docs/SEGURANCA.md) | sessões, CSRF, quotas, cabeçalhos, deteção de crise, dados |
 | [`docs/TESTES.md`](docs/TESTES.md) | as quatro camadas de teste e o que cada uma não prova |
+| [`docs/DEPLOY-VERCEL.md`](docs/DEPLOY-VERCEL.md) | publicar na Vercel: Postgres obrigatório, env vars, limites de função, checklist |
 | [`PROGRESS.md`](PROGRESS.md) | estado real do projeto, o que está feito, o que falta |
 
 ## Estrutura

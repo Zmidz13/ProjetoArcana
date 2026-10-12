@@ -1,18 +1,52 @@
 # Instalação e execução
 
 O ARCANA foi desenhado para poder ser corrido **sem chaves de API, sem serviços externos e sem
-dependências nativas**. O mínimo necessário é Node 22.5+ (por causa de `node:sqlite`) e npm.
+dependências nativas**. O mínimo necessário é Node **22.6** e npm; recomendado **22.18+**
+(verificado em 22.22.3).
 
 ## 1. Pré-requisitos
 
 | Ferramenta | Versão mínima | Para quê |
 | --- | --- | --- |
-| Node.js | 22.5 (recomendado 22.18+) | `node:sqlite`, type-stripping de `.ts` em scripts |
+| Node.js | 22.6 (recomendado 22.18+) | `node:sqlite` existe desde 22.5; os scripts `.ts` precisam de type-stripping (flag `--experimental-transform-types` em 22.6–22.17, por omissão a partir de 22.18) |
 | npm | 10 | instalação e scripts |
 | PostgreSQL | 16 (opcional) | só se não quiseres SQLite local |
 
-`package.json` declara `"engines": { "node": ">=22.5" }`. Não há binários nativos: o build
-funciona em CI sem `apt-get install` de nada.
+O que está instalado e verificado nesta máquina (é disto que este documento fala; se o teu
+`package.json` divergir, o `package.json` ganha):
+
+| Peça | Versão instalada | Nota |
+| --- | --- | --- |
+| Next.js | **15.5.27** | App Router, `next build` + `next start`; **não** é Next 16 |
+| React | **19.3.0** | React Compiler desligado (`next.config.mjs` sem a flag) |
+| TypeScript | 5.9.3 | `moduleResolution: Bundler` + `allowImportingTsExtensions` (imports com `.ts` explícito) |
+| Zod | 4.3.5 | único ponto de verdade dos limites de texto |
+| Tailwind CSS | 3.4.21 | 32 tokens em `tailwind.config.mjs`; **não** é v4 (não há `@theme`) |
+| `pg` | 8.23.1 | só usado quando `DATABASE_URL` existe (deploy — `docs/DEPLOY-VERCEL.md`) |
+| `gsap` | 3.15.0 | única dependência de animação; não há `framer-motion` no projeto |
+| Vitest / Playwright | 3.2.7 / 1.64.0 | o Playwright precisa de browser instalado à parte |
+| Lighthouse | 13.5.0 (dev) | `npm run a11y:lighthouse`; sem Chrome no sistema avisa e sai 0 |
+
+Fora `gsap`, `next`, `react` e `pg`, o resto do produto é escrito à mão:
+
+- as fontes **não** são dependência nem `next/font` -- `globals.css` usa o *stack* do sistema
+  (`ui-serif, Georgia, serif` para a display, `ui-sans-serif` para o corpo), com um guião inline
+  em `layout.tsx` a ler `localStorage` antes da primeira pintura para não dar flash de tema;
+- não há service worker nem IndexedDB. O que funciona sem servidor é o **motor e o catálogo**:
+  `content.json` vem no bundle e `src/engine`/`src/domain/narrative` correm no browser
+  (verificação `verify-local` na mesa e nos testes unitários);
+- `localStorage` guarda apenas um **espelho** das preferências (`arcana:preferences`) e do tema de
+  baralho para o arranque não piscar -- a fonte de verdade é a tabela `preferences` no servidor, e
+  a sessão é cookie `httpOnly` assinada; nada de tokens no `localStorage`.
+
+`package.json` declara `"engines": { "node": ">=22.6" }` — e é mesmo esse o mínimo *prático*:
+o `next` sozinho correria em 20.11, mas os scripts do projeto (`build-content.ts`,
+`build-art.ts`, `migrate.ts`) são TypeScript corrido por `node` sem compilação prévia, e o
+base de dados local é `node:sqlite`. Não há binários nativos: o build funciona em CI sem
+`apt-get install` de nada.
+
+> **Deploy serverless**: a Vercel precisa de Postgres — `./var/arcana.db` não sobrevive lá.
+> Está descrito ao detalhe em [`DEPLOY-VERCEL.md`](DEPLOY-VERCEL.md).
 
 ## 2. Primeira execução
 

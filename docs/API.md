@@ -11,6 +11,23 @@ três regras partilhadas em `src/server/http.ts`:
 - **cookies de sessão/dispositivo/CSRF** emitidas por `issueSession`/`withDevice`. A cookie
   legível `arcana_csrf` é repetida no cabeçalho `X-CSRF-Token` em qualquer mutação autenticada.
 
+### 0.1 · Os erros que a UI sabe ler (medidos com `curl`, não de memória)
+
+| estatuto | `code` | corpo real |
+| --- | --- | --- |
+| 400 | `json_invalido` | `{"error":"O corpo do pedido não é JSON válido.","code":"json_invalido"}` |
+| 403 | `csrf` | `{"error":"Origem não reconhecida.","code":"csrf"}` — também quando falta/erra o `X-CSRF-Token` |
+| 422 | `validacao` | `{"error":"O pedido não cumpre o formato esperado.","code":"validacao","details":[{"campo":"handle","problema":"Required"},{"campo":"email","problema":"Email inválido."}]}` |
+| 429 | `limite_atingido` | `{...,"details":{"retryAfterSeconds":12}}` — a UI mostra "tenta de novo em Ns" em vez de engolir o erro |
+
+Além destes, cada rota levanta `HttpError(status, mensagem, code, details)` com códigos locais
+(`nao_autenticado`, `inexistente`, `integridade`, `limite_de_uso`…). A forma — `error`, `code`,
+`details?` — não muda; é isso que `src/lib/api.ts` espera e que os testes de integração validam.
+
+> Não há `suggestions` nem `campaign` no envelope de erro. O texto do envelope de *leitura*
+> (`InterpretResult.campaign`) é outra coisa: vem de `POST /api/readings/[id]/interpret`, que é
+> uma resposta `200`, não um erro.
+
 ## Leitura
 
 | Rota | Devolve |

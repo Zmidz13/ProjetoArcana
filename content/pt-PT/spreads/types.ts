@@ -1,4 +1,5 @@
 import type { SpreadCategory, SpreadShape, SpreadThemeWeight } from '../../../src/domain/types.ts'
+import type { LayoutParams } from '../../../src/engine/layout.ts'
 import type { RawPosition } from './positions.ts'
 
 export interface SpreadDraft {
@@ -6,19 +7,13 @@ export interface SpreadDraft {
   name: string
   category: SpreadCategory
   shape: SpreadShape
-  /** Parâmetros passados ao gerador de layout (`src/engine/layout.ts`). */
-  layout?: {
-    radius?: number
-    cx?: number
-    cy?: number
-    cols?: number
-    gap?: number
-    rows?: number
-    startAngle?: number
-    sweep?: number
-    tilt?: number
-    curve?: number
-  }
+  /**
+   * Parâmetros passados ao gerador de layout. O tipo é o do próprio motor
+   * (`LayoutParams` em `src/engine/layout.ts`): uma lista aqui à mão já ficou para trás
+   * em relação ao motor e calava chaves que o gerador honra (`count`, `rowGap`,
+   * `amplitude`, `colGap`, `layerTilt`).
+   */
+  layout?: LayoutParams
   /** Quando true, as posições já trazem coordenadas próprias e o gerador não as toca. */
   explicitLayout?: boolean
   /** Separa posições sobrepostas (radiais, cruzamentos). */

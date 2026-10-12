@@ -58,7 +58,7 @@ seed que o motor usou: duas pessoas com o mesmo `seal` estão a olhar para o mes
 
 ## Testes e verificação
 
-- `tests/unit/art-render.spec.ts`: todos os 421 glifos pedidos resolvem; SVG válido por tema;
+- `tests/unit/art-render.spec.ts`: todas as 421 referências de glifo (218 únicos) resolvem; SVG válido por tema;
   determinismo byte-a-byte; escape de texto hostil; a invertida roda só a `cena`; 78 cartas dão 78
   SVG distintos; e o `manifest.json` aponta para ficheiros que existem com hashes únicos.
 - `npm run audit:art` — `build-art.ts --check`: valida sem escrever.

@@ -16,6 +16,12 @@ export interface PgOptions {
   password?: string
   maxConnections?: number
   ssl?: boolean
+  /** Duração máxima de um cliente ocioso no pool. Em serverless queremos que seja curto. */
+  idleTimeoutMillis?: number
+  /** Espera máxima por uma conexão livre antes de falhar em vez de enfileirar para sempre. */
+  connectionTimeoutMillis?: number
+  /** Não usado pelo `pg`; mantido para simetria com o SQLite (verbosidade do adaptador). */
+  verbose?: boolean
 }
 
 function toPgParams(params: SqlValue[]): unknown[] {
@@ -79,6 +85,10 @@ export class PgAdapter implements DatabaseClient {
       password: options.password,
       max: options.maxConnections ?? 10,
       ssl: options.ssl ? { rejectUnauthorized: false } : undefined,
+      // Em runtime serverless cada instância fria abre o seu próprio pool: um `max` grande
+      // multiplicado por dezenas de isolados esgota um pooler PgBouncer em segundos.
+      idleTimeoutMillis: options.idleTimeoutMillis ?? 30_000,
+      connectionTimeoutMillis: options.connectionTimeoutMillis ?? 5_000,
     })
     await pool.query('SELECT 1')
     return new PgAdapter(pool)

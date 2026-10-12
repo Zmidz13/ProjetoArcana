@@ -20,7 +20,7 @@ npm run verify            # check + next build + benchmark do motor
 | `deck.spec.ts` | PRNG, `hashSeed`/`deriveSeed`, permutações por algoritmo, `cutDeck`/`threeCuts`, unicidade da compra |
 | `ritual-flow.spec.ts` | o contrato do ritual: `cutSize` respeitado e registado, replay igual, escolha manual com `((i%len)+len)%len`, colisões de índice resolvidas, topo/fundo/alternado, filtro de só-maiores, `allowReversed` não muda cartas, taxa de invertidas entre 20 % e 80 %, unicidade em **todas** as 76 tiragens |
 | `symbolic.spec.ts` | tabela Golden Dawn/planos/elementos, aspectos, `analyze`, carta do dia estável por dia |
-| `art-render.spec.ts` | 421 glifos resolvem, SVG válido e seguro, determinismo, escape, invertida roda só a camada `cena`, 78 cartas ⇒ 78 SVG distintos, manifest e hashes únicos |
+| `art-render.spec.ts` | 421 referências de glifo (218 únicos) resolvem, SVG válido e seguro, determinismo, escape, invertida roda só a camada `cena`, 78 cartas ⇒ 78 SVG distintos, manifest e hashes únicos |
 | `experience.spec.ts` | ambientes/efeitos coerentes, `requireEnvironment` tolerante, `mergePreferences` com lixo/out-of-range/parciais |
 | `audio-engine.spec.ts` | `AmbienceEngine` sem `AudioContext`: no-op, estado coerente, `setEnabled(false)` não desmonta, volumes limitados, singleton |
 | `safety.spec.ts` | ideação suicida/autolesão/violência de relação bloqueiam com contactos; tristeza não bloqueia; diretivas não duplicadas; ordem por gravidade |
@@ -40,7 +40,7 @@ a mover efetivamente as linhas. É este o teste que corre no arranque do build d
 ## 3. Auditorias estáticas (são testes, mas de produto)
 
 - `npm run audit:content` — 78 cartas (22 + 4×14), ≥25 campos por carta, ≥65 tiragens (76), 522
-  posições com coordenadas, 306 relações sem pontas soltas, 421 glifos, 546 textos únicos, zero
+  posições com coordenadas, 306 relações sem pontas soltas, 218 glifos únicos (421 referências), 546 textos únicos, zero
   placeholders (`lorem ipsum`, `TODO`, `a completar`, …) e sobreposições de layout só permitidas
   quando mudam rotação/escala (é o caso do braço da Cruz Céltica).
 - `npm run audit:art` — `build-art.ts --check`: valida sem escrever; falha se um glifo não resolver

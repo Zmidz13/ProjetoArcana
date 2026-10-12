@@ -22,8 +22,7 @@ coordenadas das posições não são escritas à mão — são derivadas da `sha
 mesa usa, com `separateOverlaps` a desempatar e `bounds` a normalizar.
 
 `npm run content:build` regenera; `npm run content:validate` valida sem escrever (é o modo do CI);
-`npm run audit:content` exige 78 cartas (22 + 4×14), ≥25 campos por carta, ≥65 tiragens, relações
-sem pontas soltas, coordenadas em todas as posições, prosa não repetida entre cartas e zero
+`npm run audit:content` exige 78 cartas (22 + 4×14), ≥25 campos por carta, ≥65 tiragens, relações sem pontas soltas, coordenadas em todas as posições, prosa não repetida entre cartas e zero
 marcadores de placeholder.
 
 ## Uma carta (chaves reais, na ordem em que aparecem no objeto)

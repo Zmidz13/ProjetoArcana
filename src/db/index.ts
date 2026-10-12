@@ -19,30 +19,48 @@ export interface DbConfig {
   file: string
   connectionString?: string
   verbose: boolean
+  /** Tamanho do pool `pg` por processo. Em serverless o valor certo é 1. */
+  poolMax: number
+  /** Força `ssl: { rejectUnauthorized: false }` (hosted DBs com certificado autosassinado). */
+  ssl: boolean
 }
 
-export function dbConfigFromEnv(env: NodeJS.ProcessEnv = process.env): DbConfig {
+export type EnvLike = NodeJS.ProcessEnv | Record<string, string | undefined>
+
+/** Separa a leitura do ambiente da ligação — é isto que permite testar a configuração. */
+export function dbConfigFromEnv(env: EnvLike = process.env): DbConfig {
   const driver = (env.ARCANA_DB_DRIVER ?? (env.DATABASE_URL ? 'postgres' : 'sqlite')) as DbConfig['driver']
   const dataDir = env.ARCANA_DATA_DIR ?? join(process.cwd(), 'var')
+  // `VERCEL`/`AWS_LAMBDA_FUNCTION_NAME`: processos curtos e muitos → pool pequeno.
+  // Numa máquina longa (VPS, Fly, Docker) um pool maior é melhor e não há isolados a multiplicá-lo.
+  const serverless = env.VERCEL === '1' || Boolean(env.AWS_LAMBDA_FUNCTION_NAME)
+  const poolMax = Number(env.ARCANA_PG_POOL_MAX ?? (serverless ? 1 : 10))
   return {
     driver,
     file: join(dataDir, 'arcana.db'),
     connectionString: env.DATABASE_URL,
     verbose: env.ARCANA_DB_VERBOSE === '1',
+    poolMax: Number.isFinite(poolMax) && poolMax > 0 ? Math.floor(poolMax) : 1,
+    ssl: env.ARCANA_PG_SSL === '1' || env.PGSSLMODE === 'require',
   }
 }
 
 let instance: DatabaseClient | null = null
 let connecting: Promise<DatabaseClient> | null = null
 
-export async function getDb(env: NodeJS.ProcessEnv = process.env): Promise<DatabaseClient> {
+export async function getDb(env: EnvLike = process.env): Promise<DatabaseClient> {
   if (instance) return instance
   if (connecting) return connecting
   connecting = (async () => {
     const config = dbConfigFromEnv(env)
     const client =
       config.driver === 'postgres'
-        ? await (await import('./postgres.ts')).PgAdapter.connect({ connectionString: config.connectionString, verbose: undefined } as never)
+        ? await (await import('./postgres.ts')).PgAdapter.connect({
+            connectionString: config.connectionString,
+            maxConnections: config.poolMax,
+            ssl: config.ssl,
+            verbose: config.verbose,
+          })
         : (await import('./sqlite.ts')).SqliteAdapter.open({ file: config.file, verbose: config.verbose })
     await migrate(client)
     return client

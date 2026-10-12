@@ -1,0 +1,163 @@
+name: CI
+
+# O que este workflow prova está descrito em `docs/TESTES.md` §13.
+# As camadas 1 a 3 (unitário, integração com SQLite real, auditorias) correm sempre;
+# o Lighthouse só é vinculativo quando existe um `CHROME_PATH` no runner.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: verificar (typecheck · lint · testes · auditorias · build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: limpar arte de exemplo do repositório
+        run: rm -rf public/art && mkdir -p public/art
+
+      - name: instalar dependências
+        run: npm ci
+
+      - name: gerar conteúdo a partir de content/pt-PT
+        run: npm run content:build
+
+      - name: auditar cobertura de conteúdo
+        run: npm run audit:content
+
+      - name: gerar arte (7 temas × 78 cartas + baralhos + verso + mesa)
+        run: npm run art:build
+
+      - name: auditar arte gerada
+        run: npm run audit:art
+
+      - name: migrações (verificação de isolamento de base)
+        run: npm run db:migrate
+
+      - name: typecheck + lint + testes + auditorias de tokens e a11y
+        run: npm run check
+        env:
+          ARCANA_SESSION_SECRET: ci-secret-de-teste-com-pelo-menos-32-caracteres-0123456789
+
+      - name: benchmark do motor determinístico
+        run: npm run bench
+
+      - name: build de produção
+        run: npx next build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+
+      - name: smoke do build (arranca e responde a /api/health)
+        run: |
+          npx next start -p 3000 & pid=$!
+          for i in $(seq 1 40); do
+            sleep 2
+            if curl -fsS http://127.0.0.1:3000/api/health >/tmp/health.json; then break; fi
+          done
+          cat /tmp/health.json
+          curl -fsS http://127.0.0.1:3000/ >/dev/null
+          curl -fsS http://127.0.0.1:3000/art/obsidiana/major-00-fool.svg >/dev/null
+          kill $pid
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arte-temas
+          path: public/art/obsidiana
+          retention-days: 7
+
+  postgres:
+    name: integração com Postgres 16
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: arcana
+          POSTGRES_PASSWORD: arcana
+          POSTGRES_DB: arcana_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run content:build
+      - name: corredor Postgres da suite de integração
+        run: npm run test:integration:postgres
+        env:
+          PG_TEST_URL: postgresql://arcana:arcana@127.0.0.1:5432/arcana_test
+          ARCANA_SESSION_SECRET: ci-secret-de-teste-com-pelo-menos-32-caracteres-0123456789
+
+  lighthouse:
+    name: Lighthouse (perf + a11y + SEO)
+    runs-on: ubuntu-latest
+    # O runner do GitHub traz Chrome; se algum dia não o trouxer, o script de
+    # `a11y:lighthouse` avisa e sai 0 em vez de fingir que mediu.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run content:build && npm run art:build
+      - run: npx next build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - name: servir o build
+        run: |
+          npx next start -p 3000 &
+          for i in $(seq 1 40); do sleep 2; curl -fsS http://127.0.0.1:3000/api/health >/dev/null && break; done
+      - name: métricas
+        run: npm run a11y:lighthouse
+        env:
+          ARCANA_SESSION_SECRET: ci-secret-de-teste-com-pelo-menos-32-caracteres-0123456789
+          LIGHTHOUSE_MIN_A: '90'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: relatorio-lighthouse
+          path: .tmp/relatorio-lighthouse.json
+
+  e2e:
+    name: Playwright (chromium)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run content:build && npm run art:build
+      - run: npm run test:e2e:install
+      # `playwright.config.ts` tem `webServer`: o Playwright arranca o `next dev` dele
+      # próprio (porta 3123) e espera por /api/health antes de correr os cenários.
+      - name: fluxos essenciais
+        run: npm run test:e2e
+        env:
+          ARCANA_DATA_DIR: /tmp/arcana-e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/

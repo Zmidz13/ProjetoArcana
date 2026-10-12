@@ -48,6 +48,7 @@
     "tests/**/*.ts",
     "tests/**/*.tsx",
     "scripts/**/*.mjs",
+    "scripts/**/*.ts",
     "next-env.d.ts",
     ".next/types/**/*.ts",
     "vitest.config.ts",

@@ -8,14 +8,44 @@ Estado honesto do repositório. Última verificação: `2026-10-12`.
 | --- | --- |
 | `npx tsc --noEmit` | 0 erros |
 | `npx eslint .` | 0 erros, 0 avisos (depois de limpar as 66 ocorrências iniciais) |
-| `npx vitest run` | **115 testes, 8 ficheiros, 0 falhas** (unitários + integração com SQLite real) |
-| `npm run audit:content` | 78 cartas · 76 tiragens · 522 posições · 306 relações · 421 glifos · 546 textos únicos · 0 placeholders |
+| `npm run test` | **122 testes, 9 ficheiros, 0 falhas** (unitários + integração com SQLite real) |
+| `npm run audit:content` | 78 cartas · 76 tiragens · 522 posições · 306 relações · 218 glifos únicos (421 referências) · 546 textos únicos · 0 placeholders |
 | `npm run audit:art` | 1106 SVG válidos (média 9,1 kB, 4,85 MB) · 0 colisões de hash |
 | `npm run audit:tokens` | 39 variáveis em `tokens.css`, espelhadas em `tailwind.config.mjs` sem divergência |
 | `npm run audit:a11y` | 115 ficheiros verificados, 0 falhas |
 | `npm run bench` | 1000 sessões por algoritmo em 68–137 ms (~42–92 µs/sessão); determinismo e não-colisão de seeds OK |
 | `npx next build` | compila, 100 páginas pré-renderizadas, 26 rotas de API |
 | `curl` contra `next start` | as 19 páginas a responder 200 com os títulos certos, 404 a funcionar, e todos os contratos de API dos painéis verificados (auth+CSRF, diário, calendário, estatísticas, baralhos, preferências, exportação, feedback, `auth/claim`) |
+
+## Correcção aberta nesta volta (2026-10-12, depois do PR #1)
+
+Estas quatro coisas apareceram quando o `tsc` passou a ver `scripts/` e quando se leu o
+pacote ao invés de confiar na memória -- ou seja, são falhas que a verificação anterior não
+apanhava, não regressões:
+
+| Ficheiro | O que estava mal | Agora |
+| --- | --- | --- |
+| `tsconfig.json` | `include` não cobria `scripts/**` | cobre; os scripts passaram a ser verificados |
+| `scripts/migrate.ts` | importava `ensureDb` de `../src/db/index.ts`, que **não exporta** isso (`SyntaxError` ao correr `npm run db:migrate`) | usa `getDb`/`migrate` de `@/db/migrate.ts` + `resetBootstrap`, com `--experimental-transform-types` no script npm; imprime motor e alvo; duas corridas seguidas = `0 aplicada(s), 2 já presentes` |
+| `content/pt-PT/spreads/types.ts` | o campo `layout` era uma lista de chaves escrita à mão, que ficou para trás do motor: `count`, `rowGap`, `amplitude`, `colGap`, `layerTilt` estavam no conteúdo e no `LayoutParams` do motor mas não no tipo autorável (10 erros de tipo) | o tipo do conteúdo **é** o `LayoutParams` do motor (`import type`), zero mudança de runtime/coordenadas: `522 posições` e `128 ligações` idênticos |
+| `src/db/index.ts`, `src/db/postgres.ts` | `PgAdapter.connect` recebia `verbose: undefined as never` e o tamanho do pool ficava sempre em 10, mesmo em serverless (N isolados × 10 conexões num pooler PgBouncer = esgotado) | `dbConfigFromEnv` ganha `poolMax` (`1` com `VERCEL`/`AWS_LAMBDA_FUNCTION_NAME`, `10` noutro sítio, ajustável com `ARCANA_PG_POOL_MAX`) e `ssl` (`ARCANA_PG_SSL=1` ou `PGSSLMODE=require`); `idleTimeoutMillis`/`connectionTimeoutMillis` explícitos; `EnvLike` torna a configuração testável → `tests/unit/db-config.spec.ts` (7 casos) |
+| `package.json` | `engines.node` dizia `>=20.11`, mas os scripts `.ts` e o `node:sqlite` não correm em 20 | `>=22.6` (recomendado 22.18+, verificado em 22.22.3) e `docs/INSTALACAO.md` §1 corrigido, que afirmava `>=22.5` |
+| `docs/ARTE.md`, `docs/TESTES.md`, `docs/CONTEUDO.md`, `PROGRESS.md` | "421 glifos" -- 421 é o número de **referências**; o `audit` conta 218 únicos de 302 declarados | frases corrigidas para "218 glifos únicos (421 referências)" |
+
+Novo documento: **`docs/DEPLOY-VERCEL.md`** (o que a Vercel precisa de fazer, porque SQLite não
+sobrevive lá, `DATABASE_URL` também no ambiente de *build* por causa do pré-render, tabela de
+variáveis, `maxDuration` 300/120 vs teto de 60 s de planos pequenos, previews, checklist por
+`curl`, e o que ainda não foi provado). `.github/workflows/ci.yml` recriado com os comandos
+reais do `package.json` (inclui job de Postgres 16 e job de Playwright).
+
+> **Perdas do snapshot da caixa de areia**: no meio desta volta o workspace foi restaurado para
+> o estado do commit, o que deitou fora trabalho **não comitado** de voltas anteriores -- seis
+> documentos (`CONFIGURACAO.md`, `IA-E-TOKENS.md`, `DESIGN-SISTEMA.md`, `UX-PADROES.md`,
+> `MODOS.md`, `OFFLINE.md`) e uns quantos retoques de UI/test-ids. Não estavam no PR #1, por isso
+> o `main` mergeado está coerente; mas a promessa de "13 documentos" ficou em 10. Reescrevem-se
+> a pedido, com a vantagem de já saírem certos (as versões perdidas tinham referências a
+> `src/domain/ai/budget.js`, `src/ai/audit.ts`, `src/lib/usage-metering.ts`, `scripts/cron.sh`,
+> `db:seed`, `RATE_LIMITS`, `ARCANA_AI_MAX_*` — nenhuma dessas paths existe neste repositório).
 
 ## O que está feito
 
@@ -41,8 +71,8 @@ Estado honesto do repositório. Última verificação: `2026-10-12`.
   divergência; `GET /api/readings/[id]` devolve `replay.matches`.
 
 ### Camada visual
-- `src/art/`: `svg.ts` (primitivas + escape), `glyphs.ts` (léxico com 421 glifos pedidos pelo
-  conteúdo a resolver), `render.ts` (7 temas, 7 camadas nomeadas + textura, verso por tema, selo de
+- `src/art/`: `svg.ts` (primitivas + escape), `glyphs.ts` (léxico de motivos elementares — todas as 421 referências do
+  conteúdo, 218 únicos, têm de resolver), `render.ts` (7 temas, 7 camadas nomeadas + textura, verso por tema, selo de
   seed), e `scripts/build-art.ts` que escreve `public/art/**` + `manifest.json` e **falha** se um
   glifo não resolver ou se dois SVG partilharem hash.
 - Só `<path> <rect> <circle> <ellipse> <line> <polygon> <text>` e nada de máscaras/filtros: o mesmo
@@ -82,7 +112,7 @@ Estado honesto do repositório. Última verificação: `2026-10-12`.
   projetos (`tests/e2e/`), com config que arranca o próprio servidor.
 - Scripts novos: `audit-coverage.mjs` (conteúdo), `audit-tokens.mjs`, `audit-a11y.mjs`,
   `bench-engine.mjs`, `lighthouse.mjs`, `migrate.ts`.
-- 9 documentos em `docs/` (Instalação, Arquitetura, Conteúdo, Arte, Som, IA, API, Segurança,
+- 10 documentos em `docs/` (Instalação, Arquitetura, Conteúdo, Arte, Som, IA, API, Segurança,
   Testes) + este `PROGRESS.md` + README reescrito.
 
 ## Correcções encontradas ao construir o resto (não estavam no plano)

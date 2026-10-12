@@ -106,6 +106,8 @@ notes.push(`glifos usados: ${usedGlyphs.size} de ${declaredGlyphs.size} declarad
  * garante que o grafo é não-dirigido, acrescentando a aresta inversa sempre que falta.
  * Isto é o que permite ao motor falar de "combinações" sem ter de duplicar escrita à mão.
  */
+/** O parâmetro é o tipo das cartas já normalizadas: sem casts, porque o `derived` faz parte
+ * do registo de relação desde o início (`src/domain/types.ts`). */
 function symmetriseRelations(cards: typeof CARDS) {
   const index = new Map(cards.map((c, i) => [c.id, i]))
   const added: string[] = []
@@ -122,7 +124,7 @@ function symmetriseRelations(cards: typeof CARDS) {
   return added
 }
 
-const addedRelations = symmetriseRelations(CARDS as unknown as { id: string; relations: { card: string; kind: never; note: string; derived?: boolean }[] }[])
+const addedRelations = symmetriseRelations(CARDS)
 notes.push(`ligações simétricas materializadas: ${addedRelations.length}`)
 
 for (const card of CARDS) {

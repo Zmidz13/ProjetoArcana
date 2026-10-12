@@ -27,7 +27,7 @@
     "bench": "node scripts/bench-engine.mjs",
     "content:build": "node scripts/build-content.ts",
     "art:build": "node scripts/build-art.ts",
-    "db:migrate": "node scripts/migrate.ts",
+    "db:migrate": "node --experimental-transform-types scripts/migrate.ts",
     "setup": "npm run content:build && npm run art:build && npm run db:migrate",
     "check": "npm run typecheck && npm run lint && npm run test && npm run audit:content && npm run audit:tokens && npm run audit:a11y",
     "verify": "npm run check && npm run build && npm run bench",
@@ -61,6 +61,6 @@
     "vitest": "^3.2.7"
   },
   "engines": {
-    "node": ">=20.11"
+    "node": ">=22.6"
   }
 }
